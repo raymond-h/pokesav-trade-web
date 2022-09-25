@@ -3,10 +3,14 @@ import { BrowserModule } from '@angular/platform-browser';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
+import { ConnectLinkViewComponent } from './connect-link-view/connect-link-view.component';
+import { MainViewComponent } from './main-view/main-view.component';
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    ConnectLinkViewComponent,
+    MainViewComponent
   ],
   imports: [
     BrowserModule,
