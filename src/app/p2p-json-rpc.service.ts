@@ -5,6 +5,7 @@ import {
   JSONRPCServerAndClient,
 } from 'json-rpc-2.0';
 import Peer, { DataConnection } from 'peerjs';
+import { Subject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -18,17 +19,19 @@ export class P2pJsonRpcService {
   otherPeerId: string | null = null;
   private connection: DataConnection | null = null;
 
+  onOpen = new Subject<void>();
+  onClose = new Subject<void>();
+
   constructor() {
     this.peer = new Peer();
 
     this.serverAndClient = new JSONRPCServerAndClient(
       new JSONRPCServer(),
       new JSONRPCClient(async (req) => {
+        // console.log('[SEND]', req);
         this.connection?.send(req);
       })
     );
-
-    this.serverAndClient.addMethod('echo', (params) => params);
 
     this.peer
       .on('open', (id) => {
@@ -58,13 +61,20 @@ export class P2pJsonRpcService {
       conn.once('open', () => resolve());
     });
 
+    this.onOpen.next();
+
     conn
       .on('data', (data) => {
+        // console.log('[RECV]', data);
         this.serverAndClient.receiveAndSend(data);
       })
       .once('close', () => {
+        this.serverAndClient.rejectAllPendingRequests(
+          'peerjs connection closed'
+        );
         this.otherPeerId = null;
         this.connection = null;
+        this.onClose.next();
       });
 
     this.otherPeerId = conn.peer;
