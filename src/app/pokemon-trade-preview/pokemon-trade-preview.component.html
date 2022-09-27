@@ -1,0 +1,27 @@
+<div class="d-flex align-items-center border rounded p-3" style="height: 7rem">
+  <ng-container
+    *ngTemplateOutlet="item; context: { $implicit: localPokemon }"
+  ></ng-container>
+
+  <span class="mx-3 align-self-center user-select-none h2 m-0">⮀</span>
+
+  <ng-container
+    *ngTemplateOutlet="item; context: { $implicit: remotePokemon }"
+  ></ng-container>
+</div>
+
+<ng-template #item let-pkmn>
+  <div class="d-flex flex-grow-1 flex-column align-items-center" style="width: 8rem">
+    <img
+      *ngIf="pkmn"
+      style="width: 40px; height: 40px; object-fit: none"
+      [src]="getIconUrl(pkmn.nationalDexId)"
+      alt="Icon of Pokemon species"
+    />
+    <span *ngIf="pkmn" class="user-select-none">{{ pkmn.name }}</span>
+
+    <div *ngIf="!pkmn" class="spinner-grow" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+</ng-template>

@@ -1,22 +1,21 @@
-<h2>Main view</h2>
-
 <div *ngIf="!isConnected; else connected">
   <p>
-    Share this link with the person you want to trade with: {{ connectUrl }}
+    Share this link with the person you want to trade with:
+    <app-share-link [link]="connectUrl.toString()"></app-share-link>
   </p>
 </div>
 <ng-template #connected>
-  <div>
-    <p>Connected to: {{ otherPeerId }}</p>
-
-    <label for="savefile-input">Savefile: </label>
+  <p>Connected to: {{ otherPeerId }}</p>
+  <div class="input-group mb-3">
     <input
+      class="form-control"
       type="file"
       name="savefile"
       id="savefile-input"
       (change)="onSavefileChanged($event)"
     />
     <button
+      class="btn btn-primary"
       *ngIf="fileBuffer"
       type="button"
       (click)="downloadCurrentFileBuffer()"
@@ -28,48 +27,89 @@
 
 <!-- <button type="button" (click)="setOwnPokemon()">Set own Pokemon</button> -->
 
-<div>
-  <ul>
-    <li
-      [class.selected]="(tradeService.state | async)!.local.toTradeIndex === i"
-      *ngFor="
-        let pkmn of (tradeService.state | async)!.local.pokemon;
-        let i = index
-      "
-    >
+<div *ngIf="isConnected">
+  <div class="row">
+    <div class="col-6 vstack">
+      <h3 class="text-center">
+        {{ (tradeService.state | async)!.local.trainerName }}
+      </h3>
+      <app-pokemon-party
+        [pokemonParty]="(tradeService.state | async)!.local.pokemon"
+        [selectedIndex]="(tradeService.state | async)!.local.toTradeIndex"
+        (selectedIndexChange)="tradeService.setToTradeIndex($event)"
+      ></app-pokemon-party>
+    </div>
+
+    <div class="col-6 vstack">
+      <h3 class="text-center">
+        {{ (tradeService.state | async)!.remote.trainerName }}
+      </h3>
+      <app-pokemon-party
+        [showOnly]="true"
+        [pokemonParty]="(tradeService.state | async)!.remote.pokemon"
+        [selectedIndex]="(tradeService.state | async)!.remote.toTradeIndex"
+      ></app-pokemon-party>
+    </div>
+  </div>
+
+  <div class="row" *ngIf="showTradePreview$ | async">
+    <div class="col-4 d-flex align-items-center justify-content-end">
       <button
-        *ngIf="tradeService.canSetToTradeIndex(i)"
+        style="width: 5rem; height: 5rem"
+        class="btn btn-primary rounded-circle m-3 col-6"
+        [disabled]="!tradeService.canReadyLocalSelection()"
+        *ngIf="!tradeService.canCancelReady()"
         type="button"
-        (click)="tradeService.setToTradeIndex(i)"
+        (click)="tradeService.readyLocalSelection()"
       >
         Select
       </button>
-      <span>{{ pkmn.name }} </span>
-      <span>(Nat. Dex ID {{ pkmn.nationalDexId }})</span>
-    </li>
-  </ul>
-  <button
-    *ngIf="tradeService.canReadyLocalSelection()"
-    type="button"
-    (click)="tradeService.readyLocalSelection()"
-  >
-    Ready
-  </button>
-  <button
-    *ngIf="tradeService.canCancelReady()"
-    type="button"
-    (click)="tradeService.cancelReady()"
-  >
-    Cancel ready
-  </button>
-  <button
-    *ngIf="tradeService.canConfirm()"
-    type="button"
-    (click)="tradeService.confirm()"
-  >
-    Confirm
-  </button>
+      <button
+        style="width: 5rem; height: 5rem"
+        class="btn btn-danger rounded-circle m-3 col-6"
+        *ngIf="tradeService.canCancelReady()"
+        type="button"
+        (click)="tradeService.cancelReady()"
+      >
+        Cancel
+      </button>
+      <button
+        style="width: 5rem; height: 5rem"
+        class="btn btn-success rounded-circle m-3 col-6"
+        [disabled]="!tradeService.canConfirm()"
+        type="button"
+        (click)="tradeService.confirm()"
+      >
+        Confirm
+      </button>
+    </div>
+
+    <div class="col-4 my-3">
+      <app-pokemon-trade-preview
+        [localPokemon]="localSelectedPokemon$ | async"
+        [remotePokemon]="remoteSelectedPokemon$ | async"
+      ></app-pokemon-trade-preview>
+    </div>
+
+    <div class="col-4 d-flex align-items-center justify-content-start">
+      <div
+        *ngIf="isRemoteConfirmed$ | async; else remoteNotConfirmed"
+        style="width: 5rem; height: 5rem"
+        class="m-3 bg-success text-white rounded-circle d-flex align-items-center justify-content-center"
+      >
+        <span class="h2 m-0 user-select-none">✓</span>
+      </div>
+      <ng-template #remoteNotConfirmed>
+        <div
+          style="width: 5rem; height: 5rem"
+          class="m-3 bg-light border rounded-circle d-flex align-items-center justify-content-center"
+        >
+          <span class="h2 m-0 user-select-none">…</span>
+        </div>
+      </ng-template>
+    </div>
+  </div>
 </div>
 
-<p>Trade state:</p>
-<pre>{{ tradeService.state | async | json }}</pre>
+<!-- <p>Trade state:</p>
+<pre>{{ tradeService.state | async | json }}</pre> -->

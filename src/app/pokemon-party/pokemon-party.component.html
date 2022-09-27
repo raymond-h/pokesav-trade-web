@@ -1,0 +1,40 @@
+<div class="container">
+  <div class="row row-cols-1 row-cols-xl-2 g-3">
+    <div *ngFor="let pkmn of pokemonParty; let i = index" class="col">
+      <button
+        *ngIf="!showOnly"
+        type="button"
+        class="btn btn-light w-100 border rounded p-2 hstack"
+        [class.active]="i === selectedIndex"
+        (click)="selectedIndexChange.emit(i)"
+      >
+        <ng-container
+          *ngTemplateOutlet="buttonContents; context: { $implicit: pkmn }"
+        ></ng-container>
+      </button>
+
+      <div
+        *ngIf="showOnly"
+        class="w-100 border rounded p-2 hstack"
+        [class.border-dark]="i === selectedIndex"
+        (click)="selectedIndexChange.emit(i)"
+      >
+        <ng-container
+          *ngTemplateOutlet="buttonContents; context: { $implicit: pkmn }"
+        ></ng-container>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #buttonContents let-pkmn>
+  <img
+    style="width: 40px; height: 40px; object-fit: none"
+    [src]="getIconUrl(pkmn.nationalDexId)"
+    alt="Icon of Pokemon species"
+  />
+  <div class="ms-2 d-flex flex-column align-items-start">
+    <span class="user-select-none">{{ pkmn.name }}</span>
+    <span class="text-muted user-select-none">Level {{ pkmn.level }}</span>
+  </div>
+</ng-template>

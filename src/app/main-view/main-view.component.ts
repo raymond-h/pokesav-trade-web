@@ -3,10 +3,11 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { Buffer } from 'buffer';
 import { fromBuffer } from 'pokesav-ds-gen5';
+import { map, Observable } from 'rxjs';
 import { downloadBlob } from 'src/lib/download-blob';
 import { metadataFromPokesavObject } from 'src/lib/savefile-pokesav-compatibility-black-white-1';
 import { P2pJsonRpcService } from '../p2p-json-rpc.service';
-import { Pokemon, TradeService } from '../trade.service';
+import { hasConfirmed, Pokemon, TradeService } from '../trade.service';
 
 async function blobToBufferAsync(blob: Blob) {
   const arrayBuffer = await blob.arrayBuffer();
@@ -41,12 +42,46 @@ export class MainViewComponent {
     return new URL(path, window.location.href);
   }
 
+  localSelectedPokemon$: Observable<Pokemon | null>;
+  remoteSelectedPokemon$: Observable<Pokemon | null>;
+  showTradePreview$: Observable<boolean>;
+  isRemoteConfirmed$: Observable<boolean>;
+
   constructor(
     private router: Router,
     private location: Location,
     private p2pJsonRpcService: P2pJsonRpcService,
     public tradeService: TradeService
-  ) {}
+  ) {
+    this.localSelectedPokemon$ = tradeService.state.pipe(
+      map((state) =>
+        state.local.state !== 'selecting-pokemon' &&
+        state.local.toTradeIndex != null
+          ? state.local.pokemon[state.local.toTradeIndex]
+          : null
+      )
+    );
+
+    this.remoteSelectedPokemon$ = tradeService.state.pipe(
+      map((state) =>
+        state.remote.state !== 'selecting-pokemon' &&
+        state.remote.toTradeIndex != null
+          ? state.remote.pokemon[state.remote.toTradeIndex]
+          : null
+      )
+    );
+
+    this.showTradePreview$ = tradeService.state.pipe(
+      map(
+        (state) =>
+          state.local.pokemon.length > 0 && state.remote.pokemon.length > 0
+      )
+    );
+
+    this.isRemoteConfirmed$ = tradeService.state.pipe(
+      map((state) => hasConfirmed(state.remote))
+    );
+  }
 
   async onSavefileChanged(event: Event) {
     const files = (<HTMLInputElement>event.target).files!;
@@ -61,9 +96,17 @@ export class MainViewComponent {
     this.fileName = files[0].name;
     this.fileBuffer = fileBuffer;
 
-    const party: Pokemon[] = parsed.partyPokemonBlock.partyPokemon
-      .map((pkmn) => metadataFromPokesavObject(pkmn.base))
-      .map((pkmn) => ({ name: pkmn.nickname, nationalDexId: pkmn.species }));
+    const party: Pokemon[] = parsed.partyPokemonBlock.partyPokemon.map(
+      (pkmn) => {
+        const meta = metadataFromPokesavObject(pkmn.base);
+
+        return {
+          name: meta.nickname,
+          nationalDexId: meta.species,
+          level: pkmn.battleStats.level,
+        };
+      }
+    );
 
     console.log('File changed', parsed.trainerDataBlock.trainerName, party);
 
@@ -89,6 +132,7 @@ export class MainViewComponent {
       localPokemon.push({
         name: 'Pokemon ' + Math.random(),
         nationalDexId: 1 + Math.floor(Math.random() * 500),
+        level: 1 + Math.floor(Math.random() * 99),
       });
     }
 

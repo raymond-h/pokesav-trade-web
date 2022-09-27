@@ -7,7 +7,5 @@ import { P2pJsonRpcService } from './p2p-json-rpc.service';
   styleUrls: ['./app.component.css'],
 })
 export class AppComponent {
-  title = 'pokesav-trade-web';
-
   constructor(public p2pJsonRpcService: P2pJsonRpcService) {}
 }

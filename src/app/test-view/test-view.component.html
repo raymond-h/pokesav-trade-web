@@ -1,0 +1,21 @@
+<div class="col-4 mx-auto">
+  <app-pokemon-trade-preview
+    [localPokemon]="data[1]"
+    [remotePokemon]="data[3]"
+  ></app-pokemon-trade-preview>
+
+  <app-pokemon-trade-preview
+    [localPokemon]="null"
+    [remotePokemon]="data[3]"
+  ></app-pokemon-trade-preview>
+
+  <app-pokemon-trade-preview
+    [localPokemon]="data[1]"
+    [remotePokemon]="null"
+  ></app-pokemon-trade-preview>
+
+  <app-pokemon-trade-preview
+    [localPokemon]="null"
+    [remotePokemon]="null"
+  ></app-pokemon-trade-preview>
+</div>

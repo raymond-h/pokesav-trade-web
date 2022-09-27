@@ -20,6 +20,7 @@ type ArgumentsOf<F> = F extends (...args: infer A) => any ? A : never;
 const pokemonSchema = y.object({
   name: y.string().required(),
   nationalDexId: y.number().required().integer(),
+  level: y.number().required().integer(),
 });
 
 export type Pokemon = y.InferType<typeof pokemonSchema>;
@@ -54,7 +55,7 @@ function isReady(userState: TradeUserState) {
   return userState.state === 'ready' && userState.toTradeIndex != null;
 }
 
-function hasConfirmed(userState: TradeUserState) {
+export function hasConfirmed(userState: TradeUserState) {
   return userState.state === 'confirmed' || userState.state === 'fetched';
 }
 
@@ -85,6 +86,22 @@ function updateState(
   return newState;
 }
 
+const initialState: TradeState = {
+  local: {
+    trainerName: null,
+    pokemon: [],
+    toTradeIndex: null,
+    state: 'selecting-pokemon',
+  },
+
+  remote: {
+    trainerName: null,
+    pokemon: [],
+    toTradeIndex: null,
+    state: 'selecting-pokemon',
+  },
+};
+
 @Injectable({
   providedIn: 'root',
 })
@@ -93,21 +110,7 @@ export class TradeService {
     return this.p2pJsonRpcService.serverAndClient;
   }
 
-  state = new BehaviorSubject<TradeState>({
-    local: {
-      trainerName: null,
-      pokemon: [],
-      toTradeIndex: null,
-      state: 'selecting-pokemon',
-    },
-
-    remote: {
-      trainerName: null,
-      pokemon: [],
-      toTradeIndex: null,
-      state: 'selecting-pokemon',
-    },
-  });
+  state = new BehaviorSubject<TradeState>(initialState);
 
   constructor(zone: NgZone, private p2pJsonRpcService: P2pJsonRpcService) {
     const addJsonRpcMethod = (
@@ -154,13 +157,7 @@ export class TradeService {
 
     p2pJsonRpcService.onClose.subscribe(() =>
       zone.run(() => {
-        this.state.next(
-          updateState(this.state.getValue(), 'remote', {
-            pokemon: [],
-            toTradeIndex: null,
-            state: 'selecting-pokemon',
-          })
-        );
+        this.state.next(initialState);
       })
     );
 

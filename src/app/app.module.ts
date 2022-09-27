@@ -6,10 +6,16 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { ConnectLinkViewComponent } from './connect-link-view/connect-link-view.component';
 import { MainViewComponent } from './main-view/main-view.component';
+import { ShareLinkComponent } from './share-link/share-link.component';
+import { TestViewComponent } from './test-view/test-view.component';
+import { PokemonPartyComponent } from './pokemon-party/pokemon-party.component';
+import { PokemonTradePreviewComponent } from './pokemon-trade-preview/pokemon-trade-preview.component';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { ToastGlobalComponent } from './toast-global/toast-global.component';
 
 @NgModule({
-  declarations: [AppComponent, ConnectLinkViewComponent, MainViewComponent],
-  imports: [BrowserModule, AppRoutingModule, FormsModule],
+  declarations: [AppComponent, ConnectLinkViewComponent, MainViewComponent, ShareLinkComponent, TestViewComponent, PokemonPartyComponent, PokemonTradePreviewComponent, ToastGlobalComponent],
+  imports: [BrowserModule, AppRoutingModule, FormsModule, NgbModule],
   providers: [],
   bootstrap: [AppComponent],
 })

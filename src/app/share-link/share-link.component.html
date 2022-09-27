@@ -1,0 +1,12 @@
+<div class="input-group mb-3">
+  <input class="form-control" type="text" [value]="link" readonly />
+  <button
+    class="btn"
+    [class.btn-success]="recentlyClicked"
+    [class.btn-outline-secondary]="!recentlyClicked"
+    type="button"
+    (click)="onClick()"
+  >
+    {{ recentlyClicked ? "Copied!" : "Copy" }}
+  </button>
+</div>

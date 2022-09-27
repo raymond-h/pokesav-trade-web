@@ -1,2 +1,6 @@
-<h1>{{ title }}</h1>
-<router-outlet *ngIf="p2pJsonRpcService.peerId"></router-outlet>
+<app-toast-global aria-live="polite" aria-atomic="true"></app-toast-global>
+
+<div class="container">
+  <h1>Pokesav Trade</h1>
+  <router-outlet *ngIf="p2pJsonRpcService.peerId"></router-outlet>
+</div>
