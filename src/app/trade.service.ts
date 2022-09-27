@@ -176,6 +176,21 @@ export class TradeService {
       })
     );
 
+    const resetIfRemoteCancelsReadyObs = this.state.pipe(
+      pairwise(),
+      filter(
+        ([prevState, currState]) =>
+          hasConfirmed(prevState.local) &&
+          isReady(prevState.remote) &&
+          currState.remote.state === 'selecting-pokemon'
+      ),
+      tap(() => {
+        this.setLocalState({
+          state: 'ready',
+        });
+      })
+    );
+
     const doTradeObs = this.state.pipe(
       pairwise(),
       filter(
@@ -217,6 +232,7 @@ export class TradeService {
 
     merge(
       resetIfRemoteChangesPokemonObs,
+      resetIfRemoteCancelsReadyObs,
       doTradeObs,
       resetStateAfterTradeObs
     ).subscribe({
@@ -278,7 +294,7 @@ export class TradeService {
   canCancelReady() {
     const state = this.state.getValue();
 
-    return isReady(state.local) && !hasConfirmed(state.remote);
+    return isReady(state.local);
   }
 
   cancelReady() {
