@@ -67,7 +67,10 @@ export class MainViewComponent {
 
     console.log('File changed', parsed.trainerDataBlock.trainerName, party);
 
-    await this.tradeService.setLocalPokemon(party);
+    await this.tradeService.setLocalPokemon(
+      parsed.trainerDataBlock.trainerName,
+      party
+    );
   }
 
   downloadCurrentFileBuffer() {
@@ -89,6 +92,6 @@ export class MainViewComponent {
       });
     }
 
-    await this.tradeService.setLocalPokemon(localPokemon);
+    await this.tradeService.setLocalPokemon('Lol Random', localPokemon);
   }
 }

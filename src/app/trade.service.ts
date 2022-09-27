@@ -37,6 +37,7 @@ const fetchPokemonDataArgsSchema = y.object({
 });
 
 interface TradeUserState {
+  trainerName: string | null;
   pokemon: Pokemon[];
   toTradeIndex: number | null;
   state: 'selecting-pokemon' | 'ready' | 'confirmed' | 'fetched';
@@ -72,6 +73,8 @@ function updateState(
 ): TradeState {
   const newState = cloneDeep(state);
 
+  if (typeof changes.trainerName !== 'undefined')
+    newState[side].trainerName = changes.trainerName;
   if (typeof changes.pokemon !== 'undefined')
     newState[side].pokemon = changes.pokemon;
   if (typeof changes.toTradeIndex !== 'undefined')
@@ -92,12 +95,14 @@ export class TradeService {
 
   state = new BehaviorSubject<TradeState>({
     local: {
+      trainerName: null,
       pokemon: [],
       toTradeIndex: null,
       state: 'selecting-pokemon',
     },
 
     remote: {
+      trainerName: null,
       pokemon: [],
       toTradeIndex: null,
       state: 'selecting-pokemon',
@@ -143,7 +148,8 @@ export class TradeService {
     });
 
     p2pJsonRpcService.onOpen.subscribe(async () => {
-      await this.setLocalPokemon(this.state.getValue().local.pokemon);
+      const state = this.state.getValue();
+      await this.setLocalPokemon(state.local.trainerName, state.local.pokemon);
     });
 
     p2pJsonRpcService.onClose.subscribe(() =>
@@ -162,8 +168,8 @@ export class TradeService {
       map((state) => state.remote.pokemon),
       pairwise(),
       filter(([prev, curr]) => !isEqual(prev, curr)),
-      mergeMap(async (x) => {
-        await this.setLocalState({
+      tap(() => {
+        this.setLocalState({
           toTradeIndex: null,
           state: 'selecting-pokemon',
         });
@@ -179,7 +185,6 @@ export class TradeService {
       mergeMap(async ([, state]) => {
         const pokemonData = await withRetry(
           async () => {
-            console.log('Let us try this thing out');
             return await this.serverAndClient.request('fetchPokemonData', {
               partyIndex: state.remote.toTradeIndex,
             });
@@ -191,7 +196,7 @@ export class TradeService {
         console.log('Got data', pokemonData);
         console.log('Totally merging that into the savefile...');
 
-        await this.setLocalState({ state: 'fetched' });
+        this.setLocalState({ state: 'fetched' });
       })
     );
 
@@ -201,9 +206,9 @@ export class TradeService {
         ([prevState, state]) =>
           !haveBothPartiesFetched(prevState) && haveBothPartiesFetched(state)
       ),
-      delay(1000),
+      delay(100),
       mergeMap(async () => {
-        await this.setLocalState({
+        this.setLocalState({
           toTradeIndex: null,
           state: 'selecting-pokemon',
         });
@@ -221,13 +226,14 @@ export class TradeService {
     });
   }
 
-  async setLocalState(changes: TradeStateChanges) {
-    await this.serverAndClient.request('setRemoteState', changes);
+  setLocalState(changes: TradeStateChanges) {
+    this.serverAndClient.notify('setRemoteState', changes);
     this.state.next(updateState(this.state.getValue(), 'local', changes));
   }
 
-  async setLocalPokemon(pokemon: Pokemon[]) {
-    await this.setLocalState({
+  async setLocalPokemon(trainerName: string | null, pokemon: Pokemon[]) {
+    this.setLocalState({
+      trainerName,
       pokemon,
       toTradeIndex: null,
       state: 'selecting-pokemon',
@@ -244,10 +250,10 @@ export class TradeService {
     );
   }
 
-  async setToTradeIndex(toTradeIndex: number) {
+  setToTradeIndex(toTradeIndex: number) {
     if (!this.canSetToTradeIndex(toTradeIndex)) return;
 
-    await this.setLocalState({
+    this.setLocalState({
       toTradeIndex,
     });
   }
@@ -261,10 +267,10 @@ export class TradeService {
     );
   }
 
-  async readyLocalSelection() {
+  readyLocalSelection() {
     if (!this.canReadyLocalSelection()) return;
 
-    await this.setLocalState({
+    this.setLocalState({
       state: 'ready',
     });
   }
@@ -275,10 +281,10 @@ export class TradeService {
     return isReady(state.local) && !hasConfirmed(state.remote);
   }
 
-  async cancelReady() {
+  cancelReady() {
     if (!this.canCancelReady()) return;
 
-    await this.setLocalState({
+    this.setLocalState({
       toTradeIndex: null,
       state: 'selecting-pokemon',
     });
@@ -293,10 +299,10 @@ export class TradeService {
     );
   }
 
-  async confirm() {
+  confirm() {
     if (!this.canConfirm()) return;
 
-    await this.setLocalState({
+    this.setLocalState({
       state: 'confirmed',
     });
   }
