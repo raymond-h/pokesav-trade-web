@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { Buffer } from 'buffer';
 import { fromBuffer } from 'pokesav-ds-gen5';
 import { downloadBlob } from 'src/lib/download-blob';
+import { metadataFromPokesavObject } from 'src/lib/savefile-pokesav-compatibility-black-white-1';
 import { P2pJsonRpcService } from '../p2p-json-rpc.service';
 import { Pokemon, TradeService } from '../trade.service';
 
@@ -60,7 +61,13 @@ export class MainViewComponent {
     this.fileName = files[0].name;
     this.fileBuffer = fileBuffer;
 
-    console.log('File changed', parsed.trainerDataBlock.trainerName);
+    const party: Pokemon[] = parsed.partyPokemonBlock.partyPokemon
+      .map((pkmn) => metadataFromPokesavObject(pkmn.base))
+      .map((pkmn) => ({ name: pkmn.nickname, nationalDexId: pkmn.species }));
+
+    console.log('File changed', parsed.trainerDataBlock.trainerName, party);
+
+    await this.tradeService.setLocalPokemon(party);
   }
 
   downloadCurrentFileBuffer() {

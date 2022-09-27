@@ -2,10 +2,12 @@ import { PokesavDsGen5 } from 'pokesav-ds-gen5';
 import { PokemonMetadata } from './savefile-modifier/black-white-1';
 
 export function metadataFromPokesavObject(
-  pokeSav: PokesavDsGen5.PokemonInParty
-): PokemonMetadata {
+  pokeSav: PokesavDsGen5.Pokemon
+): PokemonMetadata & { nickname: string } {
   const language =
-    PokesavDsGen5.CountryOfOrigin[pokeSav.base.blockA.originalLanguage];
+    PokesavDsGen5.CountryOfOrigin[
+      pokeSav.blockA.originalLanguage
+    ].toLowerCase();
 
   if (
     language !== 'japanese' &&
@@ -16,14 +18,15 @@ export function metadataFromPokesavObject(
     language !== 'spanish' &&
     language !== 'korean'
   ) {
-    throw new Error('Invalid language (should never happen)');
+    throw new Error(`Invalid language (should never happen), got: ${language}`);
   }
 
   return {
-    species: pokeSav.base.blockA.nationalPokedexId,
-    form: pokeSav.base.blockB.forme,
-    isFemale: pokeSav.base.blockB.isFemale,
-    isShiny: pokeSav.base.isShiny,
+    nickname: pokeSav.blockC.nickname,
+    species: pokeSav.blockA.nationalPokedexId,
+    form: pokeSav.blockB.forme,
+    isFemale: pokeSav.blockB.isFemale,
+    isShiny: pokeSav.isShiny,
     language,
   };
 }

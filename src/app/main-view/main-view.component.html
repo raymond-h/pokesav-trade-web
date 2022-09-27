@@ -1,22 +1,5 @@
 <h2>Main view</h2>
 
-<div>
-  <label for="savefile-input">Savefile: </label>
-  <input
-    type="file"
-    name="savefile"
-    id="savefile-input"
-    (change)="onSavefileChanged($event)"
-  />
-  <button
-    *ngIf="fileBuffer"
-    type="button"
-    (click)="downloadCurrentFileBuffer()"
-  >
-    Download savefile back
-  </button>
-</div>
-
 <div *ngIf="!isConnected; else connected">
   <p>
     Share this link with the person you want to trade with: {{ connectUrl }}
@@ -26,9 +9,67 @@
   <div>
     <p>Connected to: {{ otherPeerId }}</p>
 
-    <button type="button" (click)="setOwnPokemon()">Set own Pokemon</button>
-
-    <p>Trade state:</p>
-    <pre>{{ tradeService.state | async | json }}</pre>
+    <label for="savefile-input">Savefile: </label>
+    <input
+      type="file"
+      name="savefile"
+      id="savefile-input"
+      (change)="onSavefileChanged($event)"
+    />
+    <button
+      *ngIf="fileBuffer"
+      type="button"
+      (click)="downloadCurrentFileBuffer()"
+    >
+      Download savefile back
+    </button>
   </div>
 </ng-template>
+
+<!-- <button type="button" (click)="setOwnPokemon()">Set own Pokemon</button> -->
+
+<div>
+  <ul>
+    <li
+      [class.selected]="(tradeService.state | async)!.local.toTradeIndex === i"
+      *ngFor="
+        let pkmn of (tradeService.state | async)!.local.pokemon;
+        let i = index
+      "
+    >
+      <button
+        *ngIf="tradeService.canSetToTradeIndex(i)"
+        type="button"
+        (click)="tradeService.setToTradeIndex(i)"
+      >
+        Select
+      </button>
+      <span>{{ pkmn.name }} </span>
+      <span>(Nat. Dex ID {{ pkmn.nationalDexId }})</span>
+    </li>
+  </ul>
+  <button
+    *ngIf="tradeService.canReadyLocalSelection()"
+    type="button"
+    (click)="tradeService.readyLocalSelection()"
+  >
+    Ready
+  </button>
+  <button
+    *ngIf="tradeService.canCancelReady()"
+    type="button"
+    (click)="tradeService.cancelReady()"
+  >
+    Cancel ready
+  </button>
+  <button
+    *ngIf="tradeService.canConfirm()"
+    type="button"
+    (click)="tradeService.confirm()"
+  >
+    Confirm
+  </button>
+</div>
+
+<p>Trade state:</p>
+<pre>{{ tradeService.state | async | json }}</pre>

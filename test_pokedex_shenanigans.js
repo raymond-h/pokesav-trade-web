@@ -15,7 +15,7 @@ PPOuXhI9PKBaPkDemZaPoS330TgIE9lieY4oUFQTzBC9QF+qlc5ErkpO4q4i4b2hOvKAir7j6di/
 `, 'base64');
 
 const parsedSnivy = new PokesavDsGen5.PokemonInParty(new kaitaiStruct.KaitaiStream(snivy));
-const snivyMetadata = metadataFromPokesavObject(parsedSnivy);
+const snivyMetadata = metadataFromPokesavObject(parsedSnivy.base);
 
 console.log(snivyMetadata);
 
