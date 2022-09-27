@@ -1,8 +1,15 @@
 <h2>Main view</h2>
 
-<p>Share this link with the person you want to trade with: {{ connectUrl }}</p>
+<div *ngIf="!isConnected; else connected">
+  <p>
+    Share this link with the person you want to trade with: {{ connectUrl }}
+  </p>
+</div>
+<ng-template #connected>
+  <p>Connected to: {{ otherPeerId }}</p>
 
-<button type="button" (click)="setOwnPokemon()">Set own Pokemon</button>
+  <button type="button" (click)="setOwnPokemon()">Set own Pokemon</button>
 
-<p>Trade state:</p>
-<pre>{{ tradeService.state | async | json }}</pre>
+  <p>Trade state:</p>
+  <pre>{{ tradeService.state | async | json }}</pre>
+</ng-template>

@@ -10,6 +10,14 @@ import { Pokemon, TradeService } from '../trade.service';
   styleUrls: ['./main-view.component.css'],
 })
 export class MainViewComponent {
+  get isConnected() {
+    return !!this.p2pJsonRpcService.otherPeerId;
+  }
+
+  get otherPeerId() {
+    return this.p2pJsonRpcService.otherPeerId;
+  }
+
   get connectUrl() {
     const path = this.location.prepareExternalUrl(
       this.router.serializeUrl(

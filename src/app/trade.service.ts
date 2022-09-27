@@ -60,7 +60,7 @@ export class TradeService {
     p2pJsonRpcService.onClose
       .pipe(
         map(() => ({
-          ...this.state.getValue(),
+          localPokemon: [],
           remotePokemon: [],
         }))
       )
