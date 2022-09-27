@@ -3,7 +3,7 @@ import { PokemonMetadata } from './savefile-modifier/black-white-1';
 
 export function metadataFromPokesavObject(
   pokeSav: PokesavDsGen5.Pokemon
-): PokemonMetadata & { nickname: string } {
+): PokemonMetadata {
   const language =
     PokesavDsGen5.CountryOfOrigin[
       pokeSav.blockA.originalLanguage
@@ -22,7 +22,7 @@ export function metadataFromPokesavObject(
   }
 
   return {
-    nickname: pokeSav.blockC.nickname,
+    name: pokeSav.blockC.nickname,
     species: pokeSav.blockA.nationalPokedexId,
     form: pokeSav.blockB.forme,
     isFemale: pokeSav.blockB.isFemale,

@@ -47,8 +47,11 @@ export class TestViewComponent implements OnInit {
   constructor(private toastService: ToastService) {}
 
   ngOnInit(): void {
-    // setInterval(() => {
-    //   this.toastService.show({ title: 'Wowie', body: 'Kebab damn am I thirsty' });
-    // }, 1000);
+    setInterval(() => {
+      this.toastService.show({
+        title: 'Wowie',
+        body: 'Kebab damn am I thirsty',
+      });
+    }, 1000);
   }
 }

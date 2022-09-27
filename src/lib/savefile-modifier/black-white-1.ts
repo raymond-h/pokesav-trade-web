@@ -306,6 +306,7 @@ export function setPokedexLanguageCaught(
 }
 
 export interface PokemonMetadata {
+  name: string;
   species: number;
   isFemale: boolean;
   isShiny: boolean;

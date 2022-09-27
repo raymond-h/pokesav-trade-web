@@ -1,12 +1,13 @@
 import { Location } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Buffer } from 'buffer';
 import { fromBuffer } from 'pokesav-ds-gen5';
-import { map, Observable } from 'rxjs';
+import { map, Observable, Subscription } from 'rxjs';
 import { downloadBlob } from 'src/lib/download-blob';
 import { metadataFromPokesavObject } from 'src/lib/savefile-pokesav-compatibility-black-white-1';
 import { P2pJsonRpcService } from '../p2p-json-rpc.service';
+import { ToastService } from '../toast.service';
 import { hasConfirmed, Pokemon, TradeService } from '../trade.service';
 
 async function blobToBufferAsync(blob: Blob) {
@@ -20,9 +21,14 @@ async function blobToBufferAsync(blob: Blob) {
   templateUrl: './main-view.component.html',
   styleUrls: ['./main-view.component.css'],
 })
-export class MainViewComponent {
-  fileName: string | null = null;
-  fileBuffer: Buffer | null = null;
+export class MainViewComponent implements OnInit, OnDestroy {
+  get fileName() {
+    return this.tradeService.fileData?.name;
+  }
+
+  get fileBuffer() {
+    return this.tradeService.fileData?.buffer;
+  }
 
   get isConnected() {
     return !!this.p2pJsonRpcService.otherPeerId;
@@ -47,11 +53,14 @@ export class MainViewComponent {
   showTradePreview$: Observable<boolean>;
   isRemoteConfirmed$: Observable<boolean>;
 
+  subscriptions: Subscription[] = [];
+
   constructor(
     private router: Router,
     private location: Location,
     private p2pJsonRpcService: P2pJsonRpcService,
-    public tradeService: TradeService
+    public tradeService: TradeService,
+    private toastService: ToastService
   ) {
     this.localSelectedPokemon$ = tradeService.state.pipe(
       map((state) =>
@@ -83,6 +92,24 @@ export class MainViewComponent {
     );
   }
 
+  ngOnInit(): void {
+    this.subscriptions.push(
+      this.tradeService.onSuccessfulTrade.subscribe((info) => {
+        this.toastService.show({
+          title: 'Successful trade!',
+          body: `Your ${info.sentPokemonMetadata.name} was successfully traded for ${info.receivedPokemonMetadata.name}!
+            Click "Download savefile" to get your updated savefile with your newly received Pokemon.`,
+        });
+      })
+    );
+  }
+
+  ngOnDestroy(): void {
+    for (const s of this.subscriptions) {
+      s.unsubscribe();
+    }
+  }
+
   async onSavefileChanged(event: Event) {
     const files = (<HTMLInputElement>event.target).files!;
 
@@ -93,27 +120,10 @@ export class MainViewComponent {
       throw new Error('Unable to detect file as being a BW1 savefile');
     }
 
-    this.fileName = files[0].name;
-    this.fileBuffer = fileBuffer;
-
-    const party: Pokemon[] = parsed.partyPokemonBlock.partyPokemon.map(
-      (pkmn) => {
-        const meta = metadataFromPokesavObject(pkmn.base);
-
-        return {
-          name: meta.nickname,
-          nationalDexId: meta.species,
-          level: pkmn.battleStats.level,
-        };
-      }
-    );
-
-    console.log('File changed', parsed.trainerDataBlock.trainerName, party);
-
-    await this.tradeService.setLocalPokemon(
-      parsed.trainerDataBlock.trainerName,
-      party
-    );
+    this.tradeService.setFileData({
+      name: files[0].name,
+      buffer: fileBuffer,
+    });
   }
 
   downloadCurrentFileBuffer() {
@@ -123,19 +133,5 @@ export class MainViewComponent {
 
     const blob = new Blob([fileBuffer.buffer]);
     downloadBlob(blob, fileName);
-  }
-
-  async setOwnPokemon() {
-    const localPokemon: Pokemon[] = [];
-    const count = 1 + Math.floor(Math.random() * 5);
-    for (let index = 0; index < count; index++) {
-      localPokemon.push({
-        name: 'Pokemon ' + Math.random(),
-        nationalDexId: 1 + Math.floor(Math.random() * 500),
-        level: 1 + Math.floor(Math.random() * 99),
-      });
-    }
-
-    await this.tradeService.setLocalPokemon('Lol Random', localPokemon);
   }
 }

@@ -8,12 +8,21 @@ import {
   merge,
   mergeMap,
   pairwise,
+  Subject,
   tap,
 } from 'rxjs';
 import * as y from 'yup';
 import { isEqual, cloneDeep } from 'lodash';
 import { P2pJsonRpcService } from './p2p-json-rpc.service';
 import { withRetry } from 'src/lib/retry-promise';
+import {
+  getPokemonInParty,
+  injectPokemonAsIfByTrading,
+  PokemonMetadata,
+} from 'src/lib/savefile-modifier/black-white-1';
+import { metadataFromPokesavObject } from 'src/lib/savefile-pokesav-compatibility-black-white-1';
+import { fromBuffer, PokesavDsGen5 } from 'pokesav-ds-gen5';
+import * as kaitaiStruct from 'kaitai-struct';
 
 type ArgumentsOf<F> = F extends (...args: infer A) => any ? A : never;
 
@@ -102,6 +111,16 @@ const initialState: TradeState = {
   },
 };
 
+export interface FileData {
+  name: string;
+  buffer: Buffer;
+}
+
+export interface SuccessfulTradeInfo {
+  sentPokemonMetadata: PokemonMetadata;
+  receivedPokemonMetadata: PokemonMetadata;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -110,7 +129,12 @@ export class TradeService {
     return this.p2pJsonRpcService.serverAndClient;
   }
 
+  fileData: FileData | null = null;
+  temporaryPokemonBufferStorage: Buffer | null = null;
+
   state = new BehaviorSubject<TradeState>(initialState);
+
+  onSuccessfulTrade = new Subject<SuccessfulTradeInfo>();
 
   constructor(zone: NgZone, private p2pJsonRpcService: P2pJsonRpcService) {
     const addJsonRpcMethod = (
@@ -139,15 +163,13 @@ export class TradeService {
           `Tried to fetch wrong Pokemon data - expected ${state.local.toTradeIndex}, was actually ${partyIndex}`
         );
 
-      // TODO grab data from savefile
-      return [
-        'this',
-        'is',
-        'data',
-        partyIndex,
-        'from',
-        p2pJsonRpcService.peerId,
-      ];
+      const fileData = this.fileData;
+      if (!fileData)
+        throw new Error(
+          'Somehow a trade was done with no file data available - this should never happen'
+        );
+
+      return getPokemonInParty(fileData.buffer, partyIndex).toString('base64');
     });
 
     p2pJsonRpcService.onOpen.subscribe(async () => {
@@ -205,8 +227,8 @@ export class TradeService {
         )();
 
         // TODO actually merge into savefile
-        console.log('Got data', pokemonData);
-        console.log('Totally merging that into the savefile...');
+        this.temporaryPokemonBufferStorage = Buffer.from(pokemonData, 'base64');
+        console.log('Got data', this.temporaryPokemonBufferStorage);
 
         this.setLocalState({ state: 'fetched' });
       })
@@ -219,10 +241,53 @@ export class TradeService {
           !haveBothPartiesFetched(prevState) && haveBothPartiesFetched(state)
       ),
       delay(100),
-      mergeMap(async () => {
+      mergeMap(async ([, state]) => {
+        const pkmnBuffer = this.temporaryPokemonBufferStorage;
+        const fileData = this.fileData;
+        if (
+          pkmnBuffer == null ||
+          fileData == null ||
+          state.local.toTradeIndex == null
+        ) {
+          throw new Error(
+            'Expected both original savefile and traded Pokemon data to be available'
+          );
+        }
+
+        const originalMetadata = metadataFromPokesavObject(
+          new PokesavDsGen5.Pokemon(
+            new kaitaiStruct.KaitaiStream(
+              getPokemonInParty(fileData.buffer, state.local.toTradeIndex)
+            )
+          )
+        );
+
+        const metadata = metadataFromPokesavObject(
+          new PokesavDsGen5.Pokemon(new kaitaiStruct.KaitaiStream(pkmnBuffer))
+        );
+
+        console.log('Traded metadata', metadata);
+
+        const newFileBuffer = Buffer.from(fileData.buffer);
+        injectPokemonAsIfByTrading(
+          newFileBuffer,
+          state.local.toTradeIndex,
+          pkmnBuffer,
+          metadata
+        );
+
         this.setLocalState({
           toTradeIndex: null,
           state: 'selecting-pokemon',
+        });
+        await this.setFileData({
+          name: fileData.name,
+          buffer: newFileBuffer,
+        });
+
+        this.onSuccessfulTrade.next({
+          sentPokemonMetadata: originalMetadata,
+          receivedPokemonMetadata: metadata,
         });
       })
     );
@@ -239,9 +304,31 @@ export class TradeService {
     });
   }
 
-  setLocalState(changes: TradeStateChanges) {
+  private setLocalState(changes: TradeStateChanges) {
     this.serverAndClient.notify('setRemoteState', changes);
     this.state.next(updateState(this.state.getValue(), 'local', changes));
+  }
+
+  async setFileData(fileData: FileData) {
+    this.fileData = fileData;
+
+    const parsed = fromBuffer(fileData.buffer);
+
+    const party: Pokemon[] = parsed.partyPokemonBlock.partyPokemon.map(
+      (pkmn) => {
+        const meta = metadataFromPokesavObject(pkmn.base);
+
+        return {
+          name: meta.name,
+          nationalDexId: meta.species,
+          level: pkmn.battleStats.level,
+        };
+      }
+    );
+
+    console.log('File changed', parsed.trainerDataBlock.trainerName, party);
+
+    await this.setLocalPokemon(parsed.trainerDataBlock.trainerName, party);
   }
 
   async setLocalPokemon(trainerName: string | null, pokemon: Pokemon[]) {

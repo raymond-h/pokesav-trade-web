@@ -1,10 +1,12 @@
-<ngb-toast
-  *ngFor="let toast of toastService.toasts"
-  class="mb-3"
-  [header]="toast.title"
-  [autohide]="true"
-  [delay]="5000"
-  (hiddden)="toastService.remove(toast)"
->
-  {{ toast.body }}
-</ngb-toast>
+<div class="position-fixed bottom-0 start-50 translate-middle-x z-index-mega">
+  <ngb-toast
+    *ngFor="let toast of toastService.toasts"
+    class="mb-3"
+    [header]="toast.title"
+    [autohide]="true"
+    [delay]="5000"
+    (hiddden)="toastService.remove(toast)"
+  >
+    {{ toast.body }}
+  </ngb-toast>
+</div>

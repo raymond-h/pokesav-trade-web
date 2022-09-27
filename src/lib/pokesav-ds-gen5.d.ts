@@ -1,5 +1,6 @@
 declare module 'pokesav-ds-gen5' {
   import { Buffer } from 'buffer';
+  import * as kaitaiStruct from 'kaitai-struct';
 
   function fromBuffer(buffer: Buffer): PokesavDsGen5;
 
@@ -213,6 +214,8 @@ declare module 'pokesav-ds-gen5' {
     }
 
     class Pokemon {
+      constructor(kaitaiStream: kaitaiStruct.KaitaiStream);
+
       personalityValue: number;
       junk: Buffer;
       checksum: number;
