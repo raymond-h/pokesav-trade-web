@@ -13,6 +13,10 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
+            "allowedCommonJsDependencies": [
+              "pokesav-ds-gen5",
+              "buffer"
+            ],
             "outputPath": "dist/pokesav-trade-web",
             "index": "src/index.html",
             "main": "src/main.ts",

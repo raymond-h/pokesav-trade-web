@@ -1,8 +1,17 @@
 import { Location } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { Router } from '@angular/router';
+import { Buffer } from 'buffer';
+import { fromBuffer } from 'pokesav-ds-gen5';
+import { downloadBlob } from 'src/lib/download-blob';
 import { P2pJsonRpcService } from '../p2p-json-rpc.service';
 import { Pokemon, TradeService } from '../trade.service';
+
+async function blobToBufferAsync(blob: Blob) {
+  const arrayBuffer = await blob.arrayBuffer();
+
+  return Buffer.from(arrayBuffer);
+}
 
 @Component({
   selector: 'app-main-view',
@@ -10,6 +19,9 @@ import { Pokemon, TradeService } from '../trade.service';
   styleUrls: ['./main-view.component.css'],
 })
 export class MainViewComponent {
+  fileName: string | null = null;
+  fileBuffer: Buffer | null = null;
+
   get isConnected() {
     return !!this.p2pJsonRpcService.otherPeerId;
   }
@@ -34,6 +46,31 @@ export class MainViewComponent {
     private p2pJsonRpcService: P2pJsonRpcService,
     public tradeService: TradeService
   ) {}
+
+  async onSavefileChanged(event: Event) {
+    const files = (<HTMLInputElement>event.target).files!;
+
+    const fileBuffer = await blobToBufferAsync(files[0]);
+
+    const parsed = fromBuffer(fileBuffer);
+    if (!parsed) {
+      throw new Error('Unable to detect file as being a BW1 savefile');
+    }
+
+    this.fileName = files[0].name;
+    this.fileBuffer = fileBuffer;
+
+    console.log('File changed', parsed.trainerDataBlock.trainerName);
+  }
+
+  downloadCurrentFileBuffer() {
+    const fileName = this.fileName;
+    const fileBuffer = this.fileBuffer;
+    if (!fileBuffer || !fileName) return;
+
+    const blob = new Blob([fileBuffer.buffer]);
+    downloadBlob(blob, fileName);
+  }
 
   async setOwnPokemon() {
     const localPokemon: Pokemon[] = [];
