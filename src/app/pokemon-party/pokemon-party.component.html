@@ -1,28 +1,26 @@
-<div class="container">
-  <div class="row row-cols-1 row-cols-xl-2 g-3">
-    <div *ngFor="let pkmn of pokemonParty; let i = index" class="col">
-      <button
-        *ngIf="!showOnly"
-        type="button"
-        class="btn btn-light w-100 border rounded p-2 hstack"
-        [class.active]="i === selectedIndex"
-        (click)="selectedIndexChange.emit(i)"
-      >
-        <ng-container
-          *ngTemplateOutlet="buttonContents; context: { $implicit: pkmn }"
-        ></ng-container>
-      </button>
+<div class="row row-cols-1 row-cols-lg-2 g-3">
+  <div *ngFor="let pkmn of pokemonParty; let i = index" class="col">
+    <button
+      *ngIf="!showOnly"
+      type="button"
+      class="btn btn-light w-100 border rounded hstack p-2"
+      [class.active]="i === selectedIndex"
+      (click)="selectedIndexChange.emit(i)"
+    >
+      <ng-container
+        *ngTemplateOutlet="buttonContents; context: { $implicit: pkmn }"
+      ></ng-container>
+    </button>
 
-      <div
-        *ngIf="showOnly"
-        class="w-100 border rounded p-2 hstack"
-        [class.border-dark]="i === selectedIndex"
-        (click)="selectedIndexChange.emit(i)"
-      >
-        <ng-container
-          *ngTemplateOutlet="buttonContents; context: { $implicit: pkmn }"
-        ></ng-container>
-      </div>
+    <div
+      *ngIf="showOnly"
+      class="w-100 border rounded hstack p-2"
+      [class.border-dark]="i === selectedIndex"
+      (click)="selectedIndexChange.emit(i)"
+    >
+      <ng-container
+        *ngTemplateOutlet="buttonContents; context: { $implicit: pkmn }"
+      ></ng-container>
     </div>
   </div>
 </div>

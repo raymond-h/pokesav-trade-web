@@ -7,8 +7,10 @@ import {
   map,
   merge,
   mergeMap,
+  Observable,
   pairwise,
   Subject,
+  Subscription,
   tap,
 } from 'rxjs';
 import * as y from 'yup';
@@ -46,7 +48,7 @@ const fetchPokemonDataArgsSchema = y.object({
   partyIndex: y.number().required(),
 });
 
-interface TradeUserState {
+export interface TradeUserState {
   trainerName: string | null;
   pokemon: Pokemon[];
   toTradeIndex: number | null;
@@ -95,6 +97,32 @@ function updateState(
   return newState;
 }
 
+function canSetToTradeIndex(state: TradeState, toTradeIndex: number) {
+  return (
+    state.local.state === 'selecting-pokemon' &&
+    toTradeIndex >= 0 &&
+    toTradeIndex < state.local.pokemon.length
+  );
+}
+
+function canReadyLocalSelection(state: TradeState) {
+  return (
+    state.local.state === 'selecting-pokemon' &&
+    state.local.toTradeIndex != null
+  );
+}
+
+function canCancelReady(state: TradeState) {
+  return isReady(state.local);
+}
+
+function canConfirm(state: TradeState) {
+  return (
+    isReady(state.local) &&
+    (isReady(state.remote) || hasConfirmed(state.remote))
+  );
+}
+
 const initialState: TradeState = {
   local: {
     trainerName: null,
@@ -135,6 +163,10 @@ export class TradeService {
   state = new BehaviorSubject<TradeState>(initialState);
 
   onSuccessfulTrade = new Subject<SuccessfulTradeInfo>();
+  onConnectionClosed = new Subject<void>();
+
+  private reactiveLogic$: Observable<unknown>;
+  private subscriptions: Subscription[] = [];
 
   constructor(zone: NgZone, private p2pJsonRpcService: P2pJsonRpcService) {
     const addJsonRpcMethod = (
@@ -172,15 +204,23 @@ export class TradeService {
       return getPokemonInParty(fileData.buffer, partyIndex).toString('base64');
     });
 
-    p2pJsonRpcService.onOpen.subscribe(async () => {
-      const state = this.state.getValue();
-      await this.setLocalPokemon(state.local.trainerName, state.local.pokemon);
-    });
-
-    p2pJsonRpcService.onClose.subscribe(() =>
-      zone.run(() => {
-        this.state.next(initialState);
+    const onConnectionOpenObs = p2pJsonRpcService.onOpen.pipe(
+      mergeMap(async () => {
+        const state = this.state.getValue();
+        await this.setLocalPokemon(
+          state.local.trainerName,
+          state.local.pokemon
+        );
       })
+    );
+
+    const onConnectionClosedObs = p2pJsonRpcService.onClose.pipe(
+      tap(() =>
+        zone.run(() => {
+          this.state.next(initialState);
+          this.onConnectionClosed.next();
+        })
+      )
     );
 
     const resetIfRemoteChangesPokemonObs = this.state.pipe(
@@ -292,16 +332,34 @@ export class TradeService {
       })
     );
 
-    merge(
+    this.reactiveLogic$ = merge(
+      onConnectionOpenObs,
+      onConnectionClosedObs,
       resetIfRemoteChangesPokemonObs,
       resetIfRemoteCancelsReadyObs,
       doTradeObs,
       resetStateAfterTradeObs
-    ).subscribe({
-      error(err) {
-        console.error(err);
-      },
-    });
+    );
+  }
+
+  initialize() {
+    this.subscriptions.push(
+      this.reactiveLogic$.subscribe({
+        error(err) {
+          console.error(err);
+        },
+      })
+    );
+  }
+
+  destroy() {
+    for (const s of this.subscriptions) {
+      s.unsubscribe();
+    }
+  }
+
+  debugSetState(state: TradeState) {
+    this.state.next(state);
   }
 
   private setLocalState(changes: TradeStateChanges) {
@@ -341,13 +399,7 @@ export class TradeService {
   }
 
   canSetToTradeIndex(toTradeIndex: number) {
-    const state = this.state.getValue();
-
-    return (
-      state.local.state === 'selecting-pokemon' &&
-      toTradeIndex >= 0 &&
-      toTradeIndex < state.local.pokemon.length
-    );
+    return canSetToTradeIndex(this.state.getValue(), toTradeIndex);
   }
 
   setToTradeIndex(toTradeIndex: number) {
@@ -359,12 +411,7 @@ export class TradeService {
   }
 
   canReadyLocalSelection() {
-    const state = this.state.getValue();
-
-    return (
-      state.local.state === 'selecting-pokemon' &&
-      state.local.toTradeIndex != null
-    );
+    return canReadyLocalSelection(this.state.getValue());
   }
 
   readyLocalSelection() {
@@ -376,9 +423,7 @@ export class TradeService {
   }
 
   canCancelReady() {
-    const state = this.state.getValue();
-
-    return isReady(state.local);
+    return canCancelReady(this.state.getValue());
   }
 
   cancelReady() {
@@ -391,12 +436,7 @@ export class TradeService {
   }
 
   canConfirm() {
-    const state = this.state.getValue();
-
-    return (
-      isReady(state.local) &&
-      (isReady(state.remote) || hasConfirmed(state.remote))
-    );
+    return canConfirm(this.state.getValue());
   }
 
   confirm() {

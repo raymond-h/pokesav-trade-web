@@ -4,7 +4,7 @@
     class="mb-3"
     [header]="toast.title"
     [autohide]="true"
-    [delay]="5000"
+    [delay]="toast.delay || 5000"
     (hiddden)="toastService.remove(toast)"
   >
     {{ toast.body }}

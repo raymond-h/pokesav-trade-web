@@ -8,6 +8,41 @@ import { ToastService } from '../toast.service';
   styleUrls: ['./test-view.component.css'],
 })
 export class TestViewComponent implements OnInit {
+  canReadyLocalSelection(): boolean {
+    return false;
+  }
+  readyLocalSelection() {
+    throw new Error('Method not implemented.');
+  }
+
+  canCancelReady(): boolean {
+    return false;
+  }
+  cancelReady() {
+    throw new Error('Method not implemented.');
+  }
+
+  canConfirm(): boolean {
+    return false;
+  }
+  confirm() {
+    throw new Error('Method not implemented.');
+  }
+
+  localSelectedPokemon(): PokemonData | null {
+    return null;
+  }
+  remoteSelectedPokemon(): PokemonData | null {
+    return null;
+  }
+
+  isLocalConfirmed() {
+    return true;
+  }
+  isRemoteConfirmed(): boolean {
+    return false;
+  }
+
   data: PokemonData[] = [
     {
       name: 'MON',
@@ -47,11 +82,11 @@ export class TestViewComponent implements OnInit {
   constructor(private toastService: ToastService) {}
 
   ngOnInit(): void {
-    setInterval(() => {
-      this.toastService.show({
-        title: 'Wowie',
-        body: 'Kebab damn am I thirsty',
-      });
-    }, 1000);
+    // setInterval(() => {
+    //   this.toastService.show({
+    //     title: 'Wowie',
+    //     body: 'Kebab damn am I thirsty',
+    //   });
+    // }, 1000);
   }
 }

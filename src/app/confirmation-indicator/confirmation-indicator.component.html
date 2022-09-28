@@ -1,0 +1,15 @@
+<div
+  *ngIf="confirmed; else notConfirmed"
+  style="width: 2.5rem; height: 2.5rem"
+  class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center"
+>
+  <span class="m-0 user-select-none">✓</span>
+</div>
+<ng-template #notConfirmed>
+  <div
+    style="width: 2.5rem; height: 2.5rem"
+    class="bg-light text-dark border rounded-circle d-flex align-items-center justify-content-center"
+  >
+    <span class="m-0 user-select-none">…</span>
+  </div>
+</ng-template>

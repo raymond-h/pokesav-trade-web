@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 export interface ToastInfo {
   title: string;
   body: string;
+  delay?: number;
 }
 
 @Injectable({

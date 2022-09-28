@@ -12,9 +12,20 @@ import { PokemonPartyComponent } from './pokemon-party/pokemon-party.component';
 import { PokemonTradePreviewComponent } from './pokemon-trade-preview/pokemon-trade-preview.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ToastGlobalComponent } from './toast-global/toast-global.component';
+import { ConfirmationIndicatorComponent } from './confirmation-indicator/confirmation-indicator.component';
 
 @NgModule({
-  declarations: [AppComponent, ConnectLinkViewComponent, MainViewComponent, ShareLinkComponent, TestViewComponent, PokemonPartyComponent, PokemonTradePreviewComponent, ToastGlobalComponent],
+  declarations: [
+    AppComponent,
+    ConnectLinkViewComponent,
+    MainViewComponent,
+    ShareLinkComponent,
+    TestViewComponent,
+    PokemonPartyComponent,
+    PokemonTradePreviewComponent,
+    ToastGlobalComponent,
+    ConfirmationIndicatorComponent,
+  ],
   imports: [BrowserModule, AppRoutingModule, FormsModule, NgbModule],
   providers: [],
   bootstrap: [AppComponent],
