@@ -81,6 +81,8 @@ export class P2pJsonRpcService {
   }
 
   async connect(otherPeerId: string) {
-    await this.setConnection(this.peer.connect(otherPeerId));
+    await this.setConnection(
+      this.peer.connect(otherPeerId, { serialization: 'json' })
+    );
   }
 }
