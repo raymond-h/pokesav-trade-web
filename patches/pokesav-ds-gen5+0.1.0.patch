@@ -1,0 +1,19 @@
+diff --git a/node_modules/pokesav-ds-gen5/formats-compiled/PokesavDsGen5.js b/node_modules/pokesav-ds-gen5/formats-compiled/PokesavDsGen5.js
+index 23e4abd..96115ef 100644
+--- a/node_modules/pokesav-ds-gen5/formats-compiled/PokesavDsGen5.js
++++ b/node_modules/pokesav-ds-gen5/formats-compiled/PokesavDsGen5.js
+@@ -1,13 +1,7 @@
+ // This is a generated file! Please edit source .ksy file and use kaitai-struct-compiler to rebuild
+ 
+ (function (root, factory) {
+-  if (typeof define === 'function' && define.amd) {
+-    define(['kaitai-struct/KaitaiStream', 'pokesav/StringDecode', 'pokesav/TrainerCardSignatureReorder', 'pokesav/PokemonDecrypt', 'pokesav/PokemonDecryptShuffle'], factory);
+-  } else if (typeof module === 'object' && module.exports) {
+-    module.exports = factory(require('kaitai-struct/KaitaiStream'), require('../lib/decrypt-process.js').StringDecode, require('../lib/decrypt-process.js').TrainerCardSignatureReorder, require('../lib/decrypt-process.js').PokemonDecrypt, require('../lib/decrypt-process.js').PokemonDecryptShuffle);
+-  } else {
+-    root.PokesavDsGen5 = factory(root.KaitaiStream, root.StringDecode, root.TrainerCardSignatureReorder, root.PokemonDecrypt, root.PokemonDecryptShuffle);
+-  }
++  module.exports = factory(require('kaitai-struct/KaitaiStream'), require('../lib/decrypt-process.js').StringDecode, require('../lib/decrypt-process.js').TrainerCardSignatureReorder, require('../lib/decrypt-process.js').PokemonDecrypt, require('../lib/decrypt-process.js').PokemonDecryptShuffle);
+ }(typeof self !== 'undefined' ? self : this, function (KaitaiStream, StringDecode, TrainerCardSignatureReorder, PokemonDecrypt, PokemonDecryptShuffle) {
+ var PokesavDsGen5 = (function() {
+   PokesavDsGen5.PokemonBlockOrder = Object.freeze({
