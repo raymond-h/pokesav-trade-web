@@ -13,7 +13,7 @@ import { Subject } from 'rxjs';
 export class P2pJsonRpcService {
   serverAndClient: JSONRPCServerAndClient<void, void>;
 
-  peer: Peer;
+  peer: Peer | null = null;
   peerId: string | null = null;
 
   otherPeerId: string | null = null;
@@ -23,8 +23,6 @@ export class P2pJsonRpcService {
   onClose = new Subject<void>();
 
   constructor() {
-    this.peer = new Peer();
-
     this.serverAndClient = new JSONRPCServerAndClient(
       new JSONRPCServer(),
       new JSONRPCClient(async (req) => {
@@ -32,6 +30,10 @@ export class P2pJsonRpcService {
         this.connection?.send(req);
       })
     );
+  }
+
+  initialize() {
+    this.peer = new Peer();
 
     this.peer
       .on('open', (id) => {
@@ -81,6 +83,12 @@ export class P2pJsonRpcService {
   }
 
   async connect(otherPeerId: string) {
+    if (!this.peer) {
+      throw new Error(
+        '.connect() called before .initialize() - .initialize() must be called first'
+      );
+    }
+
     await this.setConnection(
       this.peer.connect(otherPeerId, { serialization: 'json' })
     );
