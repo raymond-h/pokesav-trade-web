@@ -14,8 +14,19 @@
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
             "allowedCommonJsDependencies": [
-              "pokesav-ds-gen5",
-              "buffer"
+              "buffer",
+              "string_decoder",
+              "assert",
+              "lodash.chunk",
+              "lodash/camelCase",
+              "lodash/has",
+              "lodash/mapKeys",
+              "lodash/mapValues",
+              "lodash/snakeCase",
+              "json-rpc-2.0",
+              "sdp",
+              "rtcpeerconnection-shim",
+              "property-expr"
             ],
             "outputPath": "dist/pokesav-trade-web",
             "index": "src/index.html",
@@ -25,7 +36,7 @@
             "assets": [
               "src/favicon.ico",
               "src/_redirects",
-              "src/assets",
+              "src/assets"
             ],
             "styles": [
               "node_modules/bootstrap/dist/css/bootstrap.min.css",
